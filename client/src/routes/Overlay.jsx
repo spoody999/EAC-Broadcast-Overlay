@@ -7,8 +7,8 @@ import SeriesScore from '../components/SeriesScore'
 export default function Overlay() {
   const gameState = useGameStore((s) => s.gameState)
   const rlConnected = useGameStore((s) => s.rlConnected)
+  const isReplay = useGameStore((s) => s.isReplay)
 
-  const isReplay = gameState.game?.bReplay ?? false
   const hasGame = rlConnected && gameState.game != null
 
   return (
@@ -38,7 +38,7 @@ export default function Overlay() {
       {/* ── Idle state ── */}
       {!rlConnected && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-          <div className="bg-black/50 rounded-full px-4 py-1.5 text-white/30 text-xs font-medium">
+          <div className="bg-gray-900 rounded-full px-4 py-1.5 text-gray-400 text-xs font-medium">
             Waiting for Rocket League…
           </div>
         </div>

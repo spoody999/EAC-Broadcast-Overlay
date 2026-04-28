@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 /* OBS Browser Source transparent background */
+/* Both html and body must be transparent — OBS CEF composites from the html element */
+html {
+  background: transparent !important;
+}
+
 body {
   background: transparent !important;
   margin: 0;

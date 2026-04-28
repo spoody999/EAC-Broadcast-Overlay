@@ -102,6 +102,10 @@ function connect() {
     for (const raw of messages) {
       try {
         const msg = JSON.parse(raw)
+        // The RL Stats API double-encodes Data as a JSON string
+        if (typeof msg.Data === 'string') {
+          msg.Data = JSON.parse(msg.Data)
+        }
         emit(msg)
       } catch {
         console.warn('[rlClient] Failed to parse message:', raw.slice(0, 120))

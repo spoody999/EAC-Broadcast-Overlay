@@ -29,9 +29,14 @@ export const useGameStore = create((set) => ({
   // Last goal event (for notification)
   lastGoal: null,
 
+  // Replay state tracked via GoalReplayStart/GoalReplayEnd events
+  // (not bReplay from UpdateState, which is unreliable during pre-kickoff)
+  isReplay: false,
+
   // Actions
   setRelayConnected: (connected) => set({ relayConnected: connected }),
   setRLConnected: (connected) => set({ rlConnected: connected }),
+  setIsReplay: (value) => set({ isReplay: value }),
 
   applyInit: ({ series, rlConnected }) =>
     set({ seriesState: series, rlConnected }),

@@ -9,16 +9,6 @@ export function useStatsSocket() {
   const reconnectTimer = useRef(null)
   const unmounted = useRef(false)
 
-  const {
-    setRelayConnected,
-    setRLConnected,
-    applyInit,
-    applyUpdateState,
-    applyGoalScored,
-    applySeriesUpdated,
-    resetGameState,
-  } = useGameStore()
-
   useEffect(() => {
     unmounted.current = false
 
@@ -34,7 +24,7 @@ export function useStatsSocket() {
       wsRef.current = ws
 
       ws.addEventListener('open', () => {
-        setRelayConnected(true)
+        useGameStore.getState().setRelayConnected(true)
       })
 
       ws.addEventListener('message', (e) => {
@@ -46,26 +36,39 @@ export function useStatsSocket() {
         }
 
         const { Event, Data } = msg
+        const store = useGameStore.getState()
 
         switch (Event) {
           case '_init':
-            applyInit(Data)
+            store.applyInit(Data)
             break
           case '_rlConnected':
-            setRLConnected(true)
+            store.setRLConnected(true)
             break
           case '_rlDisconnected':
-            setRLConnected(false)
-            resetGameState()
+            store.setRLConnected(false)
+            store.setIsReplay(false)
+            store.resetGameState()
             break
           case '_seriesUpdated':
-            applySeriesUpdated(Data)
+            store.applySeriesUpdated(Data)
             break
           case 'UpdateState':
-            applyUpdateState(Data)
+            store.applyUpdateState(Data)
             break
           case 'GoalScored':
-            applyGoalScored(Data)
+            store.applyGoalScored(Data)
+            break
+          case 'GoalReplayStart':
+            store.setIsReplay(true)
+            break
+          case 'GoalReplayEnd':
+            store.setIsReplay(false)
+            break
+          case 'CountdownBegin':
+          case 'RoundStarted':
+            // Safety reset — clears any stuck replay state
+            store.setIsReplay(false)
             break
           default:
             // Other events (BallHit, StatfeedEvent, etc.) are available
@@ -75,8 +78,8 @@ export function useStatsSocket() {
       })
 
       ws.addEventListener('close', () => {
-        setRelayConnected(false)
-        setRLConnected(false)
+        useGameStore.getState().setRelayConnected(false)
+        useGameStore.getState().setRLConnected(false)
         if (!unmounted.current) {
           reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY_MS)
         }

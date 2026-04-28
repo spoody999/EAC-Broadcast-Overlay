@@ -19,19 +19,19 @@ function TeamPanel({ team, seriesTeam, side }) {
         <img
           src={seriesTeam.logoUrl}
           alt={seriesTeam.name}
-          className="w-10 h-10 object-contain"
+          className="w-14 h-14 object-contain"
           onError={(e) => { e.currentTarget.style.display = 'none' }}
         />
       )}
 
       {/* Name */}
-      <span className="text-white font-bold text-lg uppercase tracking-wider drop-shadow-lg">
+      <span className="text-white font-bold text-2xl uppercase tracking-wider drop-shadow-lg">
         {seriesTeam?.name || team.Name}
       </span>
 
       {/* Score */}
       <span
-        className="text-white font-black text-4xl tabular-nums drop-shadow-lg"
+        className="text-white font-black text-5xl tabular-nums drop-shadow-lg"
         style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
       >
         {team.Score}
@@ -68,10 +68,10 @@ export default function Scoreboard({ dimmed }) {
       {/* Center clock */}
       <div className="flex flex-col items-center mx-6">
         <div
-          className="bg-black/70 backdrop-blur-sm rounded-xl px-6 py-2 border border-white/10"
+          className="bg-gray-900 rounded-xl px-8 py-3 border border-gray-700"
         >
           <div
-            className={`font-black text-4xl tabular-nums tracking-tight ${
+            className={`font-black text-5xl tabular-nums tracking-tight ${
               isOvertime ? 'text-yellow-400' : 'text-white'
             }`}
             style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
@@ -79,7 +79,7 @@ export default function Scoreboard({ dimmed }) {
             {isOvertime ? 'OT' : formatTime(timeSeconds)}
           </div>
           {!rlConnected && (
-            <div className="text-white/40 text-xs text-center mt-0.5">Waiting…</div>
+            <div className="text-gray-500 text-xs text-center mt-0.5">Waiting…</div>
           )}
         </div>
       </div>

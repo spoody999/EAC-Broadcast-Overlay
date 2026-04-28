@@ -17,7 +17,7 @@ function BoostBar({ boost, isBoosting, isDemolished, isSupersonic, teamNum }) {
   if (isDemolished) barColor = 'bg-red-600'
 
   return (
-    <div className="relative w-full h-2.5 bg-black/40 rounded-full overflow-hidden">
+    <div className="relative w-full h-2.5 bg-gray-800 rounded-full overflow-hidden">
       <div
         className={`h-full rounded-full transition-all duration-100 ${barColor} ${
           isBoosting && !isDemolished ? 'animate-boost-pulse' : ''
@@ -41,7 +41,7 @@ function PlayerBoostCard({ player, teamNum }) {
 
   return (
     <div
-      className={`bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border ${borderColor} w-36`}
+      className={`bg-gray-900 rounded-lg px-3 py-2 border ${borderColor} w-36`}
     >
       <div className={`text-xs font-semibold truncate mb-1.5 ${nameColor}`}>
         {isDemolished ? '💥 ' : ''}{player.Name}
@@ -56,7 +56,7 @@ function PlayerBoostCard({ player, teamNum }) {
             teamNum={teamNum}
           />
           <div className="flex justify-between mt-1">
-            <span className="text-white/50 text-xs">Boost</span>
+            <span className="text-gray-400 text-xs">Boost</span>
             <span className={`text-xs font-bold tabular-nums ${
               isSupersonic ? (isBlue ? 'text-cyan-300' : 'text-yellow-300') : 'text-white'
             }`}>
@@ -65,7 +65,7 @@ function PlayerBoostCard({ player, teamNum }) {
           </div>
         </>
       ) : (
-        <div className="text-white/30 text-xs text-center py-1">No car</div>
+        <div className="text-gray-500 text-xs text-center py-1">No car</div>
       )}
     </div>
   )

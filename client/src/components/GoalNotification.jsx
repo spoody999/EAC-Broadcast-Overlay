@@ -34,6 +34,7 @@ export default function GoalNotification() {
   const isBlue = scorerTeamNum === 0
   const teamName = seriesState.teams[scorerTeamNum]?.name || (isBlue ? 'Blue' : 'Orange')
   const teamColor = isBlue ? '#3B82F6' : '#F97316'
+  const teamColorDark = isBlue ? '#1D4ED8' : '#C2410C'
   const assister = goal.Assister
 
   return (
@@ -43,13 +44,13 @@ export default function GoalNotification() {
       }`}
     >
       <div
-        className="rounded-2xl px-10 py-4 text-center shadow-2xl backdrop-blur-sm border border-white/20"
+        className="rounded-2xl px-10 py-4 text-center shadow-2xl border border-white/20"
         style={{
-          background: `linear-gradient(135deg, ${teamColor}CC, ${teamColor}88)`,
+          background: `linear-gradient(135deg, ${teamColor}, ${teamColorDark})`,
         }}
       >
         {/* GOAL header */}
-        <div className="text-white/80 text-sm font-bold uppercase tracking-widest mb-1">
+        <div className="text-white text-sm font-bold uppercase tracking-widest mb-1">
           Goal — {teamName}
         </div>
 
@@ -60,14 +61,14 @@ export default function GoalNotification() {
 
         {/* Assist line */}
         {assister && (
-          <div className="text-white/70 text-sm mt-1">
+          <div className="text-white text-sm mt-1">
             Assist: <span className="font-semibold">{assister.Name}</span>
           </div>
         )}
 
         {/* Goal speed */}
         {goal.GoalSpeed != null && (
-          <div className="text-white/50 text-xs mt-1">
+          <div className="text-gray-200 text-xs mt-1">
             {Math.round(goal.GoalSpeed).toLocaleString()} UU/s
           </div>
         )}
