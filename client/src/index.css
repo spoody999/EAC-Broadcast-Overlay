@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* OBS Browser Source transparent background */
+body {
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Ensure admin route has a solid background */
+body.admin-view {
+  background: #0f172a !important;
+  overflow: auto;
+}

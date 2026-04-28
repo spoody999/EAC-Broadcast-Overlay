@@ -1,0 +1,96 @@
+import { useGameStore } from '../store/useGameStore'
+
+function formatTime(seconds) {
+  if (seconds == null) return '5:00'
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function TeamPanel({ team, seriesTeam, side }) {
+  const isLeft = side === 'left'
+
+  return (
+    <div
+      className={`flex items-center gap-3 ${isLeft ? 'flex-row' : 'flex-row-reverse'}`}
+    >
+      {/* Logo */}
+      {seriesTeam?.logoUrl && (
+        <img
+          src={seriesTeam.logoUrl}
+          alt={seriesTeam.name}
+          className="w-10 h-10 object-contain"
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
+        />
+      )}
+
+      {/* Name */}
+      <span className="text-white font-bold text-lg uppercase tracking-wider drop-shadow-lg">
+        {seriesTeam?.name || team.Name}
+      </span>
+
+      {/* Score */}
+      <span
+        className="text-white font-black text-4xl tabular-nums drop-shadow-lg"
+        style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
+      >
+        {team.Score}
+      </span>
+    </div>
+  )
+}
+
+export default function Scoreboard({ dimmed }) {
+  const gameState = useGameStore((s) => s.gameState)
+  const seriesState = useGameStore((s) => s.seriesState)
+  const rlConnected = useGameStore((s) => s.rlConnected)
+
+  const game = gameState.game
+  const teams = game?.Teams ?? []
+  const blueTeam = teams.find((t) => t.TeamNum === 0) ?? { Name: 'Blue', Score: 0 }
+  const orangeTeam = teams.find((t) => t.TeamNum === 1) ?? { Name: 'Orange', Score: 0 }
+
+  const timeSeconds = game?.TimeSeconds ?? null
+  const isOvertime = game?.bOvertime ?? false
+
+  return (
+    <div
+      className={`flex items-center justify-between px-8 py-2 transition-opacity duration-300 ${dimmed ? 'opacity-50' : 'opacity-100'}`}
+    >
+      {/* Blue Team (left) */}
+      <div
+        className="flex-1 flex justify-start"
+        style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,255,0.4))' }}
+      >
+        <TeamPanel team={blueTeam} seriesTeam={seriesState.teams[0]} side="left" />
+      </div>
+
+      {/* Center clock */}
+      <div className="flex flex-col items-center mx-6">
+        <div
+          className="bg-black/70 backdrop-blur-sm rounded-xl px-6 py-2 border border-white/10"
+        >
+          <div
+            className={`font-black text-4xl tabular-nums tracking-tight ${
+              isOvertime ? 'text-yellow-400' : 'text-white'
+            }`}
+            style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
+          >
+            {isOvertime ? 'OT' : formatTime(timeSeconds)}
+          </div>
+          {!rlConnected && (
+            <div className="text-white/40 text-xs text-center mt-0.5">Waiting…</div>
+          )}
+        </div>
+      </div>
+
+      {/* Orange Team (right) */}
+      <div
+        className="flex-1 flex justify-end"
+        style={{ filter: 'drop-shadow(0 2px 6px rgba(255,128,0,0.4))' }}
+      >
+        <TeamPanel team={orangeTeam} seriesTeam={seriesState.teams[1]} side="right" />
+      </div>
+    </div>
+  )
+}
