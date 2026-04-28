@@ -57,19 +57,19 @@ export default function Scoreboard({ dimmed }) {
 
   return (
     <div
-      className={`relative flex items-center px-8 py-2 transition-opacity duration-300 ${dimmed ? 'opacity-50' : 'opacity-100'}`}
-      style={{ minWidth: 700 }}
+      className={`items-center px-8 py-2 transition-opacity duration-300 ${dimmed ? 'opacity-50' : 'opacity-100'}`}
+      style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto minmax(0,1fr)', minWidth: 700 }}
     >
-      {/* Blue Team (left) */}
+      {/* Blue Team (left) — right-aligned toward clock */}
       <div
-        className="flex-1 flex justify-start pr-28"
+        className="flex justify-end pr-5"
         style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,255,0.4))' }}
       >
         <TeamPanel team={blueTeam} seriesTeam={seriesState.teams[0]} side="left" />
       </div>
 
-      {/* Center clock — absolutely centred so team panel widths never affect it */}
-      <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
+      {/* Center clock — natural flow in auto column, always centered */}
+      <div className="flex flex-col items-center">
         <div className="bg-gray-900 rounded-xl px-8 py-3 border border-gray-700">
           <div
             className={`font-black text-5xl tabular-nums tracking-tight ${
@@ -85,9 +85,9 @@ export default function Scoreboard({ dimmed }) {
         </div>
       </div>
 
-      {/* Orange Team (right) */}
+      {/* Orange Team (right) — left-aligned toward clock */}
       <div
-        className="flex-1 flex justify-end pl-28"
+        className="flex justify-start pl-5"
         style={{ filter: 'drop-shadow(0 2px 6px rgba(255,128,0,0.4))' }}
       >
         <TeamPanel team={orangeTeam} seriesTeam={seriesState.teams[1]} side="right" />
