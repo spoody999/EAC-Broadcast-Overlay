@@ -1,11 +1,12 @@
 /**
- * mock.js — Development mock for the Rocket League Stats API WebSocket.
+ * mock.js — Development mock for the Rocket League Stats API TCP socket.
  *
  * Run with:  node server/mock.js
  *
- * This script starts a WebSocket server on port 49123 (same port the RL
- * Stats API uses) and broadcasts a scripted sequence of events so you can
- * develop the overlay without a running copy of Rocket League.
+ * This script starts a raw TCP server on port 49123 (same port the RL
+ * Stats API uses) and streams a scripted sequence of newline-delimited
+ * JSON events so you can develop the overlay without a running copy of
+ * Rocket League.
  *
  * Usage:
  *   1. Start this mock:   node server/mock.js
@@ -14,23 +15,28 @@
  *   3. Open the overlay:  http://localhost:5173/overlay
  */
 
-import { WebSocketServer } from 'ws'
+import net from 'net'
 
 const PORT = 49123
-const wss = new WebSocketServer({ host: '127.0.0.1', port: PORT })
+const HOST = '127.0.0.1'
 
-console.log(`[mock] RL Stats API mock listening on ws://127.0.0.1:${PORT}`)
+const server = net.createServer()
+server.listen(PORT, HOST, () => {
+  console.log(`[mock] RL Stats API mock listening on tcp://${HOST}:${PORT}`)
+})
 
 const MATCH_GUID = 'MOCK0000000000000000000000000001'
 
-// Helper: broadcast to all connected clients
-function broadcast(event, data) {
+// Helper: send a newline-delimited JSON event to a specific socket
+function send(socket, event, data) {
+  if (socket.destroyed || !socket.writable) return
   const raw = JSON.stringify({ Event: event, Data: { MatchGuid: MATCH_GUID, ...data } })
-  for (const client of wss.clients) {
-    if (client.readyState === 1) client.send(raw)
-  }
+  socket.write(raw + '\n')
   console.log(`[mock] → ${event}`)
 }
+
+// Alias for single-client use inside runSequence
+let broadcast = () => {}
 
 // Build a mock UpdateState payload
 function makeUpdateState(timeSeconds, blueScore, orangeScore, blueBoost, orangeBoost, overtime = false) {
@@ -196,8 +202,10 @@ function makeUpdateState(timeSeconds, blueScore, orangeScore, blueBoost, orangeB
   }
 }
 
-wss.on('connection', () => {
+server.on('connection', (socket) => {
   console.log('[mock] Client connected — starting match sequence…')
+  socket.on('error', () => {}) // suppress broken-pipe errors if client disconnects mid-sequence
+  broadcast = (event, data) => send(socket, event, data)
   runSequence()
 })
 
