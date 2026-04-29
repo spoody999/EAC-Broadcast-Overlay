@@ -9,17 +9,6 @@ const STAT_COLS = [
   { key: 'Demos',   label: 'D' },
 ]
 
-const STYLES = `
-  @keyframes pmFadeIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes pmFadeOut {
-    from { opacity: 1; transform: translateY(0); }
-    to   { opacity: 0; transform: translateY(-16px); }
-  }
-`
-
 function TeamTable({ players, teamName, teamScore, accentColor, accentDark, isWinner }) {
   const sorted = [...players].sort((a, b) => (b.Score ?? 0) - (a.Score ?? 0))
 
@@ -165,8 +154,6 @@ export default function PostMatchStats() {
         padding: '0 80px',
         boxSizing: 'border-box',
       }}>
-      <style>{STYLES}</style>
-
       {/* "FINAL SCORE" label */}
       <div style={{
         textAlign: 'center',

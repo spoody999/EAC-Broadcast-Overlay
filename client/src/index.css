@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* OBS Browser Source transparent background */
-/* Both html and body must be transparent — OBS CEF composites from the html element */
+/* Both html and body must be transparent. OBS CEF composites from the html element. */
 html {
   background: transparent !important;
 }
@@ -19,4 +19,40 @@ body {
 body.admin-view {
   background: #0f172a !important;
   overflow: auto;
+}
+
+/* ─── Goal notification animations (used by GoalNotification.jsx) ─────────── */
+@keyframes gFlash {
+  0%   { opacity: 0; transform: scaleX(0.7); }
+  12%  { opacity: 1; transform: scaleX(1); }
+  78%  { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+@keyframes gStamp {
+  0%   { opacity: 0; transform: scale(2.6); }
+  18%  { opacity: 1; transform: scale(0.9); }
+  28%  { transform: scale(1.05); }
+  38%  { transform: scale(1); }
+  78%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+@keyframes gSlideUp {
+  0%   { opacity: 0; transform: translateY(20px); }
+  30%  { opacity: 1; transform: translateY(0); }
+  78%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+@keyframes gDrain {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* ─── Post-match stats animations (used by PostMatchStats.jsx) ────────────── */
+@keyframes pmFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pmFadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-16px); }
 }
