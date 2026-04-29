@@ -29,8 +29,13 @@ export const useGameStore = create((set) => ({
   // Last goal event (for notification)
   lastGoal: null,
 
-  // Replay state — tracked directly from bReplay in UpdateState
-  // (GoalReplayStart/GoalReplayEnd never fire in this API version)
+  // Post-match stats snapshot (shown after bHasWinner, cleared on new match)
+  postMatchStats: null,
+
+  // True while the hide-animation is playing; component unmounts on animationEnd
+  postMatchHiding: false,
+
+  // Replay state — set on goal detection, cleared on CountdownBegin/RoundStarted
   isReplay: false,
 
   // Internal: holds scorer info for one frame so the assister (arrives next frame) can be included
@@ -58,6 +63,21 @@ export const useGameStore = create((set) => ({
 
       const updates = { gameState: newGameState }
 
+      // When a new match starts (new MatchGuid), clear post-match stats instantly (no animation)
+      if (!sameMatch && state.postMatchStats) {
+        updates.postMatchStats = null
+        updates.postMatchHiding = false
+        updates.isReplay = false
+        updates._pendingGoal = null
+      }
+
+      // Detect match winner → snapshot post-match stats
+      const prevGame = sameMatch ? state.gameState.game : null
+      if (prevGame && newGame && sameMatch && !prevGame.bHasWinner && newGame.bHasWinner) {
+        updates.postMatchStats = { players: newPlayers, game: newGame }
+        updates.isReplay = false
+      }
+
       // Step 1: If there's a pending goal from the previous frame, resolve assister now
       if (state._pendingGoal && sameMatch) {
         const { scorer, teamNum } = state._pendingGoal
@@ -76,7 +96,6 @@ export const useGameStore = create((set) => ({
       }
 
       // Step 2: Detect a new goal via team score delta (GoalScored event never fires)
-      const prevGame = state.gameState.game
       if (prevGame && newGame && sameMatch && !state._pendingGoal) {
         const prevTeams = prevGame.Teams ?? []
         const newTeams = newGame.Teams ?? []
@@ -109,7 +128,12 @@ export const useGameStore = create((set) => ({
 
   clearLastGoal: () => set({ lastGoal: null }),
 
+  setPostMatchStats: (stats) => set({ postMatchStats: stats, postMatchHiding: false }),
+  // Start the hide animation — component calls finalizeHidePostMatch on animationEnd
+  clearPostMatchStats: () => set({ postMatchHiding: true }),
+  finalizeHidePostMatch: () => set({ postMatchStats: null, postMatchHiding: false }),
+
   applySeriesUpdated: (series) => set({ seriesState: series }),
 
-  resetGameState: () => set({ gameState: initialGameState, _pendingGoal: null }),
+  resetGameState: () => set({ gameState: initialGameState, _pendingGoal: null, postMatchStats: null, postMatchHiding: false, isReplay: false }),
 }))

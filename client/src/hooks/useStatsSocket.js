@@ -60,10 +60,29 @@ export function useStatsSocket() {
             // Fallback: if RL ever does send this event, use it directly
             store.applyGoalScored(Data)
             break
+          case 'MatchDestroyed': {
+            // Game ended — snapshot current state as post-match stats
+            const gs = store.gameState
+            if (gs.game) {
+              store.setPostMatchStats({ players: gs.players, game: gs.game })
+            }
+            break
+          }
           case 'CountdownBegin':
           case 'RoundStarted':
             // Safety reset for any stuck replay state
             store.setIsReplay(false)
+            break
+          case '_postMatchShow': {
+            // Admin triggered show — snapshot current game state
+            const gs = store.gameState
+            if (gs.game) {
+              store.setPostMatchStats({ players: gs.players, game: gs.game })
+            }
+            break
+          }
+          case '_postMatchHide':
+            store.clearPostMatchStats()
             break
           default:
             // Other events (BallHit, StatfeedEvent, etc.) are available

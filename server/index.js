@@ -67,6 +67,17 @@ app.post('/api/series/reset', (_req, res) => {
   res.json(updated)
 })
 
+// Manual post-match stats show/hide (Admin → server → all WS clients)
+app.post('/api/postmatch/show', (_req, res) => {
+  broadcast({ Event: '_postMatchShow', Data: {} })
+  res.json({ ok: true })
+})
+
+app.post('/api/postmatch/hide', (_req, res) => {
+  broadcast({ Event: '_postMatchHide', Data: {} })
+  res.json({ ok: true })
+})
+
 // ─── HTTP + WebSocket server ─────────────────────────────────────────────────
 const httpServer = createServer(app)
 const wss = new WebSocketServer({ server: httpServer, path: '/ws' })

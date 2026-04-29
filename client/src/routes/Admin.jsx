@@ -62,6 +62,7 @@ export default function Admin() {
   const rlConnected = useGameStore((s) => s.rlConnected)
   const seriesState = useGameStore((s) => s.seriesState)
   const gameState = useGameStore((s) => s.gameState)
+  const postMatchStats = useGameStore((s) => s.postMatchStats)
 
   // Local form state (mirrors seriesState until saved)
   const [blueName, setBlueName] = useState('')
@@ -266,6 +267,35 @@ export default function Admin() {
             )}
             {saveStatus === 'error' && (
               <span className="text-red-400 text-sm">Save failed — is the server running?</span>
+            )}
+          </div>
+        </Section>
+
+        {/* Post-Match Stats */}
+        <Section title="Post-Match Stats">
+          <p className="text-white/50 text-sm mb-3">
+            Shown automatically when RL reports a winner. Use these controls to manually override.
+          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              variant="blue"
+              disabled={!gameState.game}
+              onClick={() => fetch(`${API}/postmatch/show`, { method: 'POST' })}
+            >
+              Show Now (current state)
+            </Button>
+            <Button
+              variant="danger"
+              disabled={!postMatchStats}
+              onClick={() => fetch(`${API}/postmatch/hide`, { method: 'POST' })}
+            >
+              Hide / Dismiss
+            </Button>
+            {postMatchStats && (
+              <span className="text-green-400 text-sm font-semibold">● Showing on overlay</span>
+            )}
+            {!postMatchStats && (
+              <span className="text-white/30 text-sm">Not currently shown</span>
             )}
           </div>
         </Section>
