@@ -29,15 +29,19 @@ app.get('/api/series', (_req, res) => {
 
 // Update series config (team names, logos, format)
 app.post('/api/series', (req, res) => {
-  const { teams, format } = req.body
-  const updated = updateSeriesConfig({ teams, format })
-  broadcast({ Event: '_seriesUpdated', Data: updated })
-  res.json(updated)
+  const { teams, format } = req.body ?? {}
+  try {
+    const updated = updateSeriesConfig({ teams, format })
+    broadcast({ Event: '_seriesUpdated', Data: updated })
+    res.json(updated)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
 })
 
 // Increment a team's series win count
 app.post('/api/series/increment', (req, res) => {
-  const { teamNum } = req.body
+  const { teamNum } = req.body ?? {}
   if (teamNum !== 0 && teamNum !== 1) {
     return res.status(400).json({ error: 'teamNum must be 0 or 1' })
   }
@@ -48,12 +52,12 @@ app.post('/api/series/increment', (req, res) => {
 
 // Set a team's series win count directly
 app.post('/api/series/wins', (req, res) => {
-  const { teamNum, wins } = req.body
+  const { teamNum, wins } = req.body ?? {}
   if (teamNum !== 0 && teamNum !== 1) {
     return res.status(400).json({ error: 'teamNum must be 0 or 1' })
   }
-  if (typeof wins !== 'number' || wins < 0) {
-    return res.status(400).json({ error: 'wins must be a non-negative number' })
+  if (!Number.isInteger(wins) || wins < 0) {
+    return res.status(400).json({ error: 'wins must be a non-negative integer' })
   }
   const updated = setSeriesWins(teamNum, wins)
   broadcast({ Event: '_seriesUpdated', Data: updated })
