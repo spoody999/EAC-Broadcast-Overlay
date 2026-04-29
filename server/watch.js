@@ -8,47 +8,12 @@
  */
 
 import net from 'net'
+import { extractMessages } from './protocol.js'
 
 const HOST = '127.0.0.1'
 const PORT = 49123
 
 let buffer = ''
-
-function extractMessages(buf) {
-  const messages = []
-  if (buf.includes('\n')) {
-    const lines = buf.split(/\r?\n/)
-    const remaining = lines.pop()
-    for (const line of lines) {
-      const t = line.trim()
-      if (t) messages.push(t)
-    }
-    return { messages, remaining }
-  }
-  if (buf.includes('\0')) {
-    const parts = buf.split('\0')
-    const remaining = parts.pop()
-    for (const part of parts) {
-      const t = part.trim()
-      if (t) messages.push(t)
-    }
-    return { messages, remaining }
-  }
-  // brace-depth fallback
-  let depth = 0, start = -1, remaining = buf
-  for (let i = 0; i < buf.length; i++) {
-    if (buf[i] === '{') { if (depth === 0) start = i; depth++ }
-    else if (buf[i] === '}') {
-      depth--
-      if (depth === 0 && start !== -1) {
-        messages.push(buf.slice(start, i + 1))
-        remaining = buf.slice(i + 1)
-        start = -1
-      }
-    }
-  }
-  return { messages, remaining }
-}
 
 console.log(`[watch] Connecting to tcp://${HOST}:${PORT} — make sure Node server is stopped`)
 

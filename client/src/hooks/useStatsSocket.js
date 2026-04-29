@@ -65,11 +65,22 @@ export function useStatsSocket() {
             // Safety reset for any stuck replay state
             store.setIsReplay(false)
             break
+          case 'MatchEnded':
+            // RL provides the authoritative winner team index here
+            if (typeof Data?.WinnerTeamNum === 'number') {
+              store.setLastWinnerTeamNum(Data.WinnerTeamNum)
+            }
+            break
           case '_postMatchShow': {
-            // Admin triggered show — snapshot current game state
+            // Admin triggered show: snapshot current game state plus the
+            // last known WinnerTeamNum (set by MatchEnded if it has fired)
             const gs = store.gameState
             if (gs.game) {
-              store.setPostMatchStats({ players: gs.players, game: gs.game })
+              store.setPostMatchStats({
+                players: gs.players,
+                game: gs.game,
+                winnerTeamNum: store.lastWinnerTeamNum,
+              })
             }
             break
           }

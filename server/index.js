@@ -13,8 +13,37 @@ import {
 
 const PORT = process.env.PORT || 3001
 
+// Origin allowlist for both REST and WebSocket. Defaults to localhost on any
+// port; set ALLOWED_ORIGINS as a comma-separated list to extend (e.g. for a
+// custom prod deployment serving the static client from its own host).
+const EXTRA_ORIGINS = (process.env.ALLOWED_ORIGINS ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true // non-browser clients (CLI tools, server-to-server)
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true
+  return EXTRA_ORIGINS.includes(origin)
+}
+
 // ─── Express app ────────────────────────────────────────────────────────────
 const app = express()
+
+// Block cross-origin writes. The relay only listens on 127.0.0.1 so the
+// realistic threat is a malicious tab in the streamer's browser issuing
+// simple-mode no-cors POSTs to the local relay.
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    return next()
+  }
+  if (!isAllowedOrigin(req.headers.origin)) {
+    console.warn('[server] rejected REST request from origin:', req.headers.origin)
+    return res.status(403).json({ error: 'Origin not allowed' })
+  }
+  next()
+})
+
 app.use(express.json())
 
 // Health check
@@ -29,15 +58,19 @@ app.get('/api/series', (_req, res) => {
 
 // Update series config (team names, logos, format)
 app.post('/api/series', (req, res) => {
-  const { teams, format } = req.body
-  const updated = updateSeriesConfig({ teams, format })
-  broadcast({ Event: '_seriesUpdated', Data: updated })
-  res.json(updated)
+  const { teams, format } = req.body ?? {}
+  try {
+    const updated = updateSeriesConfig({ teams, format })
+    broadcast({ Event: '_seriesUpdated', Data: updated })
+    res.json(updated)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
 })
 
 // Increment a team's series win count
 app.post('/api/series/increment', (req, res) => {
-  const { teamNum } = req.body
+  const { teamNum } = req.body ?? {}
   if (teamNum !== 0 && teamNum !== 1) {
     return res.status(400).json({ error: 'teamNum must be 0 or 1' })
   }
@@ -48,12 +81,12 @@ app.post('/api/series/increment', (req, res) => {
 
 // Set a team's series win count directly
 app.post('/api/series/wins', (req, res) => {
-  const { teamNum, wins } = req.body
+  const { teamNum, wins } = req.body ?? {}
   if (teamNum !== 0 && teamNum !== 1) {
     return res.status(400).json({ error: 'teamNum must be 0 or 1' })
   }
-  if (typeof wins !== 'number' || wins < 0) {
-    return res.status(400).json({ error: 'wins must be a non-negative number' })
+  if (!Number.isInteger(wins) || wins < 0) {
+    return res.status(400).json({ error: 'wins must be a non-negative integer' })
   }
   const updated = setSeriesWins(teamNum, wins)
   broadcast({ Event: '_seriesUpdated', Data: updated })
@@ -80,7 +113,18 @@ app.post('/api/postmatch/hide', (_req, res) => {
 
 // ─── HTTP + WebSocket server ─────────────────────────────────────────────────
 const httpServer = createServer(app)
-const wss = new WebSocketServer({ server: httpServer, path: '/ws' })
+const wss = new WebSocketServer({
+  server: httpServer,
+  path: '/ws',
+  verifyClient: ({ origin }, cb) => {
+    if (isAllowedOrigin(origin)) {
+      cb(true)
+    } else {
+      console.warn('[server] rejected WS connection from origin:', origin)
+      cb(false, 403, 'Origin not allowed')
+    }
+  },
+})
 
 let rlConnected = false
 const clients = new Set()
@@ -125,6 +169,14 @@ onRLEvent((msg) => {
   if (Event === '_disconnected') {
     rlConnected = false
     broadcast({ Event: '_rlDisconnected', Data: {} })
+    return
+  }
+
+  // Underscore-prefixed events are reserved for relay-synthesized signals
+  // (e.g. _seriesUpdated, _postMatchShow). Anything _-prefixed coming from
+  // the TCP source is either spoofed or unexpected; drop it.
+  if (typeof Event === 'string' && Event.startsWith('_')) {
+    console.warn('[server] dropping reserved-prefix event from TCP source:', Event)
     return
   }
 
