@@ -121,7 +121,7 @@ export default function PostMatchStats() {
 
   if (!postMatchStats) return null
 
-  const { players, game } = postMatchStats
+  const { players, game, winnerTeamNum } = postMatchStats
   const teams = game?.Teams ?? []
 
   const team0 = teams.find((t) => t.TeamNum === 0)
@@ -134,9 +134,10 @@ export default function PostMatchStats() {
   const name0 = seriesState.teams[0]?.name || team0?.Name || 'Blue'
   const name1 = seriesState.teams[1]?.name || team1?.Name || 'Orange'
 
-  // Determine winner
-  const isTeam0Winner = game?.Winner
-    ? (game.Winner === team0?.Name || game.Winner === name0)
+  // Winner: prefer the authoritative WinnerTeamNum from MatchEnded; fall
+  // back to score comparison only if the match ended without that event
+  const isTeam0Winner = winnerTeamNum != null
+    ? winnerTeamNum === 0
     : (team0?.Score ?? 0) > (team1?.Score ?? 0)
 
   return (

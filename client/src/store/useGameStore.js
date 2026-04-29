@@ -41,10 +41,14 @@ export const useGameStore = create((set) => ({
   // Internal: holds scorer info for one frame so the assister (arrives next frame) can be included
   _pendingGoal: null,
 
+  // Set by MatchEnded; consumed when snapshotting post-match stats
+  lastWinnerTeamNum: null,
+
   // Actions
   setRelayConnected: (connected) => set({ relayConnected: connected }),
   setRLConnected: (connected) => set({ rlConnected: connected }),
   setIsReplay: (value) => set({ isReplay: value }),
+  setLastWinnerTeamNum: (teamNum) => set({ lastWinnerTeamNum: teamNum }),
 
   applyInit: ({ series, rlConnected }) =>
     set({ seriesState: series, rlConnected }),
@@ -63,12 +67,15 @@ export const useGameStore = create((set) => ({
 
       const updates = { gameState: newGameState }
 
-      // When a new match starts (new MatchGuid), clear post-match stats instantly (no animation)
-      if (!sameMatch && state.postMatchStats) {
-        updates.postMatchStats = null
-        updates.postMatchHiding = false
-        updates.isReplay = false
-        updates._pendingGoal = null
+      // When a new match starts (new MatchGuid), clear per-match state
+      if (!sameMatch) {
+        updates.lastWinnerTeamNum = null
+        if (state.postMatchStats) {
+          updates.postMatchStats = null
+          updates.postMatchHiding = false
+          updates.isReplay = false
+          updates._pendingGoal = null
+        }
       }
 
       // Step 1: If there's a pending goal from the previous frame, resolve assister now
@@ -129,5 +136,5 @@ export const useGameStore = create((set) => ({
 
   applySeriesUpdated: (series) => set({ seriesState: series }),
 
-  resetGameState: () => set({ gameState: initialGameState, _pendingGoal: null, postMatchStats: null, postMatchHiding: false, isReplay: false }),
+  resetGameState: () => set({ gameState: initialGameState, _pendingGoal: null, postMatchStats: null, postMatchHiding: false, isReplay: false, lastWinnerTeamNum: null }),
 }))
