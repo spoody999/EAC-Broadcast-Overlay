@@ -132,6 +132,14 @@ onRLEvent((msg) => {
     return
   }
 
+  // Underscore-prefixed events are reserved for relay-synthesized signals
+  // (e.g. _seriesUpdated, _postMatchShow). Anything _-prefixed coming from
+  // the TCP source is either spoofed or unexpected; drop it.
+  if (typeof Event === 'string' && Event.startsWith('_')) {
+    console.warn('[server] dropping reserved-prefix event from TCP source:', Event)
+    return
+  }
+
   // Track MatchGuid on match creation
   if (Event === 'MatchCreated' && Data?.MatchGuid) {
     setMatchGuid(Data.MatchGuid)
