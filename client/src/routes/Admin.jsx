@@ -71,7 +71,22 @@ export default function Admin() {
   const [orangeLogoUrl, setOrangeLogoUrl] = useState('')
   const [format, setFormat] = useState('BO5')
   const [saving, setSaving] = useState(false)
-  const [saveStatus, setSaveStatus] = useState(null) // 'ok' | 'error'
+  const [status, setStatus] = useState(null) // { type: 'ok' | 'error', message: string }
+
+  function showStatus(type, message, ms = 2500) {
+    setStatus({ type, message })
+    setTimeout(() => setStatus((s) => (s?.message === message ? null : s)), ms)
+  }
+
+  async function postJson(path, body) {
+    const res = await fetch(`${API}${path}`, {
+      method: 'POST',
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return res
+  }
 
   // Sync form from store on load / when seriesState changes from server
   useEffect(() => {
@@ -90,24 +105,18 @@ export default function Admin() {
 
   async function saveConfig() {
     setSaving(true)
-    setSaveStatus(null)
     try {
-      const res = await fetch(`${API}/series`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          teams: [
-            { name: blueName, logoUrl: blueLogoUrl },
-            { name: orangeName, logoUrl: orangeLogoUrl },
-          ],
-          format,
-        }),
+      await postJson('/series', {
+        teams: [
+          { name: blueName, logoUrl: blueLogoUrl },
+          { name: orangeName, logoUrl: orangeLogoUrl },
+        ],
+        format,
       })
-      if (!res.ok) throw new Error('Server error')
-      setSaveStatus('ok')
-      setTimeout(() => setSaveStatus(null), 2000)
-    } catch {
-      setSaveStatus('error')
+      showStatus('ok', 'Saved!')
+    } catch (err) {
+      console.error('[admin] saveConfig failed:', err)
+      showStatus('error', 'Save failed — is the server running?', 4000)
     } finally {
       setSaving(false)
     }
@@ -116,15 +125,39 @@ export default function Admin() {
   async function adjustWins(teamNum, delta) {
     const current = seriesState.teams[teamNum]?.seriesWins ?? 0
     const next = Math.max(0, current + delta)
-    await fetch(`${API}/series/wins`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ teamNum, wins: next }),
-    })
+    try {
+      await postJson('/series/wins', { teamNum, wins: next })
+    } catch (err) {
+      console.error('[admin] adjustWins failed:', err)
+      showStatus('error', 'Failed to update series wins', 4000)
+    }
   }
 
   async function resetSeries() {
-    await fetch(`${API}/series/reset`, { method: 'POST' })
+    try {
+      await postJson('/series/reset')
+    } catch (err) {
+      console.error('[admin] resetSeries failed:', err)
+      showStatus('error', 'Failed to reset series', 4000)
+    }
+  }
+
+  async function showPostMatch() {
+    try {
+      await postJson('/postmatch/show')
+    } catch (err) {
+      console.error('[admin] showPostMatch failed:', err)
+      showStatus('error', 'Failed to show post-match stats', 4000)
+    }
+  }
+
+  async function hidePostMatch() {
+    try {
+      await postJson('/postmatch/hide')
+    } catch (err) {
+      console.error('[admin] hidePostMatch failed:', err)
+      showStatus('error', 'Failed to hide post-match stats', 4000)
+    }
   }
 
   const game = gameState.game
@@ -262,11 +295,10 @@ export default function Admin() {
             <Button onClick={saveConfig} variant="blue" disabled={saving}>
               {saving ? 'Saving…' : 'Save Configuration'}
             </Button>
-            {saveStatus === 'ok' && (
-              <span className="text-green-400 text-sm">Saved!</span>
-            )}
-            {saveStatus === 'error' && (
-              <span className="text-red-400 text-sm">Save failed — is the server running?</span>
+            {status && (
+              <span className={`text-sm ${status.type === 'ok' ? 'text-green-400' : 'text-red-400'}`}>
+                {status.message}
+              </span>
             )}
           </div>
         </Section>
@@ -280,14 +312,14 @@ export default function Admin() {
             <Button
               variant="blue"
               disabled={!gameState.game}
-              onClick={() => fetch(`${API}/postmatch/show`, { method: 'POST' })}
+              onClick={showPostMatch}
             >
               Show Now (current state)
             </Button>
             <Button
               variant="danger"
               disabled={!postMatchStats}
-              onClick={() => fetch(`${API}/postmatch/hide`, { method: 'POST' })}
+              onClick={hidePostMatch}
             >
               Hide / Dismiss
             </Button>

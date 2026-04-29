@@ -3,33 +3,6 @@ import { useGameStore } from '../store/useGameStore'
 
 const DURATION_MS = 5000
 
-const STYLES = `
-  @keyframes gFlash {
-    0%   { opacity: 0; transform: scaleX(0.7); }
-    12%  { opacity: 1; transform: scaleX(1); }
-    78%  { opacity: 1; transform: scaleX(1); }
-    100% { opacity: 0; transform: scaleX(1); }
-  }
-  @keyframes gStamp {
-    0%   { opacity: 0; transform: scale(2.6); }
-    18%  { opacity: 1; transform: scale(0.9); }
-    28%  { transform: scale(1.05); }
-    38%  { transform: scale(1); }
-    78%  { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(1); }
-  }
-  @keyframes gSlideUp {
-    0%   { opacity: 0; transform: translateY(20px); }
-    30%  { opacity: 1; transform: translateY(0); }
-    78%  { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(0); }
-  }
-  @keyframes gDrain {
-    from { width: 100%; }
-    to   { width: 0%; }
-  }
-`
-
 export default function GoalNotification() {
   const lastGoal = useGameStore((s) => s.lastGoal)
   const clearLastGoal = useGameStore((s) => s.clearLastGoal)
@@ -60,8 +33,6 @@ export default function GoalNotification() {
 
   return (
     <div key={animKey} style={{ minWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <style>{STYLES}</style>
-
       {/* Card */}
       <div style={{
         animation: anim('gFlash'),
@@ -123,7 +94,9 @@ export default function GoalNotification() {
         <div style={{ height: 4, background: 'rgba(255,255,255,0.2)' }}>
           <div style={{
             height: '100%',
+            width: '100%',
             background: 'rgba(255,255,255,0.65)',
+            transformOrigin: 'left',
             animation: anim('gDrain'),
           }} />
         </div>

@@ -6,14 +6,10 @@ import SeriesScore from '../components/SeriesScore'
 import PostMatchStats from '../components/PostMatchStats'
 
 export default function Overlay() {
-  const gameState = useGameStore((s) => s.gameState)
+  const hasGame = useGameStore((s) => s.rlConnected && s.gameState.game != null)
   const rlConnected = useGameStore((s) => s.rlConnected)
   const isReplay = useGameStore((s) => s.isReplay)
-  const postMatchStats = useGameStore((s) => s.postMatchStats)
-  const postMatchHiding = useGameStore((s) => s.postMatchHiding)
-
-  const hasGame = rlConnected && gameState.game != null
-  const isPostMatch = postMatchStats != null || postMatchHiding
+  const isPostMatch = useGameStore((s) => s.postMatchStats != null || s.postMatchHiding)
 
   return (
     // Fixed 1920×1080 canvas — OBS Browser Source will render at this size
