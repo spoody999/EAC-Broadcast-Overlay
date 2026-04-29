@@ -29,9 +29,12 @@ export const useGameStore = create((set) => ({
   // Last goal event (for notification)
   lastGoal: null,
 
-  // Replay state tracked via GoalReplayStart/GoalReplayEnd events
-  // (not bReplay from UpdateState, which is unreliable during pre-kickoff)
+  // Replay state — tracked directly from bReplay in UpdateState
+  // (GoalReplayStart/GoalReplayEnd never fire in this API version)
   isReplay: false,
+
+  // Internal: holds scorer info for one frame so the assister (arrives next frame) can be included
+  _pendingGoal: null,
 
   // Actions
   setRelayConnected: (connected) => set({ relayConnected: connected }),
@@ -42,12 +45,64 @@ export const useGameStore = create((set) => ({
     set({ seriesState: series, rlConnected }),
 
   applyUpdateState: (data) =>
-    set({
-      gameState: {
+    set((state) => {
+      const newPlayers = data.Players ?? []
+      const newGame = data.Game ?? null
+      const sameMatch = data.MatchGuid === state.gameState.matchGuid
+
+      const newGameState = {
         matchGuid: data.MatchGuid ?? null,
-        players: data.Players ?? [],
-        game: data.Game ?? null,
-      },
+        players: newPlayers,
+        game: newGame,
+      }
+
+      const updates = { gameState: newGameState }
+
+      // Step 1: If there's a pending goal from the previous frame, resolve assister now
+      if (state._pendingGoal && sameMatch) {
+        const { scorer, teamNum } = state._pendingGoal
+        const prevPlayers = state.gameState.players ?? []
+        let assister = null
+        for (const p of newPlayers) {
+          if (p.TeamNum !== teamNum) continue
+          const prev = prevPlayers.find((pp) => pp.Name === p.Name)
+          if (prev && (p.Assists ?? 0) > (prev.Assists ?? 0)) {
+            assister = { Name: p.Name, TeamNum: p.TeamNum }
+            break
+          }
+        }
+        updates.lastGoal = { Scorer: scorer, Assister: assister, TeamNum: teamNum }
+        updates._pendingGoal = null
+      }
+
+      // Step 2: Detect a new goal via team score delta (GoalScored event never fires)
+      const prevGame = state.gameState.game
+      if (prevGame && newGame && sameMatch && !state._pendingGoal) {
+        const prevTeams = prevGame.Teams ?? []
+        const newTeams = newGame.Teams ?? []
+        for (let i = 0; i < Math.min(newTeams.length, prevTeams.length); i++) {
+          if ((newTeams[i].Score ?? 0) > (prevTeams[i]?.Score ?? 0)) {
+            const prevPlayers = state.gameState.players ?? []
+            let scorer = null
+            for (const p of newPlayers) {
+              if (p.TeamNum !== newTeams[i].TeamNum) continue
+              const prev = prevPlayers.find((pp) => pp.Name === p.Name)
+              if (prev && (p.Goals ?? 0) > (prev.Goals ?? 0)) {
+                scorer = { Name: p.Name, TeamNum: p.TeamNum }
+                break
+              }
+            }
+            updates._pendingGoal = {
+              scorer: scorer ?? { Name: 'Unknown', TeamNum: newTeams[i].TeamNum },
+              teamNum: newTeams[i].TeamNum,
+            }
+            updates.isReplay = true
+            break
+          }
+        }
+      }
+
+      return updates
     }),
 
   applyGoalScored: (data) => set({ lastGoal: data }),
@@ -56,5 +111,5 @@ export const useGameStore = create((set) => ({
 
   applySeriesUpdated: (series) => set({ seriesState: series }),
 
-  resetGameState: () => set({ gameState: initialGameState }),
+  resetGameState: () => set({ gameState: initialGameState, _pendingGoal: null }),
 }))

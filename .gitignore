@@ -17,6 +17,7 @@ server/series.json
 # Logs
 *.log
 npm-debug.log*
+raw-log.txt
 
 # Environment
 .env

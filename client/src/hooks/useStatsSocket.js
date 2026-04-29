@@ -57,17 +57,12 @@ export function useStatsSocket() {
             store.applyUpdateState(Data)
             break
           case 'GoalScored':
+            // Fallback: if RL ever does send this event, use it directly
             store.applyGoalScored(Data)
-            break
-          case 'GoalReplayStart':
-            store.setIsReplay(true)
-            break
-          case 'GoalReplayEnd':
-            store.setIsReplay(false)
             break
           case 'CountdownBegin':
           case 'RoundStarted':
-            // Safety reset — clears any stuck replay state
+            // Safety reset for any stuck replay state
             store.setIsReplay(false)
             break
           default:
