@@ -71,13 +71,6 @@ export const useGameStore = create((set) => ({
         updates._pendingGoal = null
       }
 
-      // Detect match winner → snapshot post-match stats
-      const prevGame = sameMatch ? state.gameState.game : null
-      if (prevGame && newGame && sameMatch && !prevGame.bHasWinner && newGame.bHasWinner) {
-        updates.postMatchStats = { players: newPlayers, game: newGame }
-        updates.isReplay = false
-      }
-
       // Step 1: If there's a pending goal from the previous frame, resolve assister now
       if (state._pendingGoal && sameMatch) {
         const { scorer, teamNum } = state._pendingGoal
@@ -96,6 +89,7 @@ export const useGameStore = create((set) => ({
       }
 
       // Step 2: Detect a new goal via team score delta (GoalScored event never fires)
+      const prevGame = sameMatch ? state.gameState.game : null
       if (prevGame && newGame && sameMatch && !state._pendingGoal) {
         const prevTeams = prevGame.Teams ?? []
         const newTeams = newGame.Teams ?? []
