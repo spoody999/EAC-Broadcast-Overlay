@@ -78,14 +78,37 @@ export const useGameStore = create((set) => ({
         }
       }
 
-      // Step 1: If there's a pending goal from the previous frame, resolve assister now
-      if (state._pendingGoal && sameMatch) {
+      // Goal detection paths only fire when there is a pending goal (one frame
+      // after a score change) or a new score delta. Build a name lookup once
+      // so the inner scans are O(1) instead of O(n) per player.
+      const prevGame = sameMatch ? state.gameState.game : null
+      const hasPendingGoal = state._pendingGoal && sameMatch
+
+      let scoringTeamIdx = -1
+      if (prevGame && newGame && sameMatch && !state._pendingGoal) {
+        const prevTeams = prevGame.Teams ?? []
+        const newTeams = newGame.Teams ?? []
+        for (let i = 0; i < Math.min(newTeams.length, prevTeams.length); i++) {
+          if ((newTeams[i].Score ?? 0) > (prevTeams[i]?.Score ?? 0)) {
+            scoringTeamIdx = i
+            break
+          }
+        }
+      }
+
+      let prevByName = null
+      if (hasPendingGoal || scoringTeamIdx !== -1) {
+        prevByName = new Map()
+        for (const p of state.gameState.players ?? []) prevByName.set(p.Name, p)
+      }
+
+      // Step 1: resolve a pending goal's assister
+      if (hasPendingGoal) {
         const { scorer, teamNum } = state._pendingGoal
-        const prevPlayers = state.gameState.players ?? []
         let assister = null
         for (const p of newPlayers) {
           if (p.TeamNum !== teamNum) continue
-          const prev = prevPlayers.find((pp) => pp.Name === p.Name)
+          const prev = prevByName.get(p.Name)
           if (prev && (p.Assists ?? 0) > (prev.Assists ?? 0)) {
             assister = { Name: p.Name, TeamNum: p.TeamNum }
             break
@@ -95,31 +118,23 @@ export const useGameStore = create((set) => ({
         updates._pendingGoal = null
       }
 
-      // Step 2: Detect a new goal via team score delta (GoalScored event never fires)
-      const prevGame = sameMatch ? state.gameState.game : null
-      if (prevGame && newGame && sameMatch && !state._pendingGoal) {
-        const prevTeams = prevGame.Teams ?? []
-        const newTeams = newGame.Teams ?? []
-        for (let i = 0; i < Math.min(newTeams.length, prevTeams.length); i++) {
-          if ((newTeams[i].Score ?? 0) > (prevTeams[i]?.Score ?? 0)) {
-            const prevPlayers = state.gameState.players ?? []
-            let scorer = null
-            for (const p of newPlayers) {
-              if (p.TeamNum !== newTeams[i].TeamNum) continue
-              const prev = prevPlayers.find((pp) => pp.Name === p.Name)
-              if (prev && (p.Goals ?? 0) > (prev.Goals ?? 0)) {
-                scorer = { Name: p.Name, TeamNum: p.TeamNum }
-                break
-              }
-            }
-            updates._pendingGoal = {
-              scorer: scorer ?? { Name: 'Unknown', TeamNum: newTeams[i].TeamNum },
-              teamNum: newTeams[i].TeamNum,
-            }
-            updates.isReplay = true
+      // Step 2: detect a new goal via team score delta (GoalScored event never fires)
+      if (scoringTeamIdx !== -1) {
+        const team = newGame.Teams[scoringTeamIdx]
+        let scorer = null
+        for (const p of newPlayers) {
+          if (p.TeamNum !== team.TeamNum) continue
+          const prev = prevByName.get(p.Name)
+          if (prev && (p.Goals ?? 0) > (prev.Goals ?? 0)) {
+            scorer = { Name: p.Name, TeamNum: p.TeamNum }
             break
           }
         }
+        updates._pendingGoal = {
+          scorer: scorer ?? { Name: 'Unknown', TeamNum: team.TeamNum },
+          teamNum: team.TeamNum,
+        }
+        updates.isReplay = true
       }
 
       return updates

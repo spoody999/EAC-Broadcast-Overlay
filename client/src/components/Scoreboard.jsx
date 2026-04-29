@@ -1,3 +1,5 @@
+import { memo } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useGameStore } from '../store/useGameStore'
 
 function formatTime(seconds) {
@@ -7,8 +9,9 @@ function formatTime(seconds) {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-function TeamPanel({ team, seriesTeam, side }) {
+const TeamPanel = memo(function TeamPanel({ score, rlName, configuredName, logoUrl, side }) {
   const isLeft = side === 'left'
+  const display = configuredName || rlName
 
   return (
     <div
@@ -16,10 +19,10 @@ function TeamPanel({ team, seriesTeam, side }) {
     >
       {/* Logo slot — always the same fixed size so both sides stay symmetrical */}
       <div className="w-14 h-14 flex-shrink-0 flex items-center justify-center">
-        {seriesTeam?.logoUrl && (
+        {logoUrl && (
           <img
-            src={seriesTeam.logoUrl}
-            alt={seriesTeam.name}
+            src={logoUrl}
+            alt={display}
             className="w-14 h-14 object-contain"
             onError={(e) => { e.currentTarget.style.display = 'none' }}
           />
@@ -28,7 +31,7 @@ function TeamPanel({ team, seriesTeam, side }) {
 
       {/* Name */}
       <span className="text-white font-bold text-2xl uppercase tracking-wider drop-shadow-lg">
-        {seriesTeam?.name || team.Name}
+        {display}
       </span>
 
       {/* Score */}
@@ -36,24 +39,33 @@ function TeamPanel({ team, seriesTeam, side }) {
         className="text-white font-black text-5xl tabular-nums drop-shadow-lg"
         style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
       >
-        {team.Score}
+        {score}
       </span>
     </div>
   )
-}
+})
 
 export default function Scoreboard({ dimmed }) {
-  const gameState = useGameStore((s) => s.gameState)
-  const seriesState = useGameStore((s) => s.seriesState)
-  const rlConnected = useGameStore((s) => s.rlConnected)
-
-  const game = gameState.game
-  const teams = game?.Teams ?? []
-  const blueTeam = teams.find((t) => t.TeamNum === 0) ?? { Name: 'Blue', Score: 0 }
-  const orangeTeam = teams.find((t) => t.TeamNum === 1) ?? { Name: 'Orange', Score: 0 }
-
-  const timeSeconds = game?.TimeSeconds ?? null
-  const isOvertime = game?.bOvertime ?? false
+  // Granular selectors collapsed into one shallow-compared object so the
+  // component re-renders only when one of these primitives actually changes
+  const view = useGameStore(useShallow((s) => {
+    const teams = s.gameState.game?.Teams
+    const blue = teams?.find((t) => t.TeamNum === 0)
+    const orange = teams?.find((t) => t.TeamNum === 1)
+    return {
+      blueScore: blue?.Score ?? 0,
+      orangeScore: orange?.Score ?? 0,
+      blueRlName: blue?.Name ?? 'Blue',
+      orangeRlName: orange?.Name ?? 'Orange',
+      timeSeconds: s.gameState.game?.TimeSeconds ?? null,
+      isOvertime: s.gameState.game?.bOvertime ?? false,
+      blueConfiguredName: s.seriesState.teams[0]?.name ?? '',
+      orangeConfiguredName: s.seriesState.teams[1]?.name ?? '',
+      blueLogoUrl: s.seriesState.teams[0]?.logoUrl ?? '',
+      orangeLogoUrl: s.seriesState.teams[1]?.logoUrl ?? '',
+      rlConnected: s.rlConnected,
+    }
+  }))
 
   return (
     <div
@@ -65,7 +77,13 @@ export default function Scoreboard({ dimmed }) {
         className="flex justify-end pr-5"
         style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,255,0.4))' }}
       >
-        <TeamPanel team={blueTeam} seriesTeam={seriesState.teams[0]} side="left" />
+        <TeamPanel
+          score={view.blueScore}
+          rlName={view.blueRlName}
+          configuredName={view.blueConfiguredName}
+          logoUrl={view.blueLogoUrl}
+          side="left"
+        />
       </div>
 
       {/* Center clock — natural flow in auto column, always centered */}
@@ -73,13 +91,13 @@ export default function Scoreboard({ dimmed }) {
         <div className="bg-gray-900 rounded-xl px-8 py-3 border border-gray-700">
           <div
             className={`font-black text-5xl tabular-nums tracking-tight ${
-              isOvertime ? 'text-yellow-400' : 'text-white'
+              view.isOvertime ? 'text-yellow-400' : 'text-white'
             }`}
             style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
           >
-            {isOvertime ? 'OT' : formatTime(timeSeconds)}
+            {view.isOvertime ? 'OT' : formatTime(view.timeSeconds)}
           </div>
-          {!rlConnected && (
+          {!view.rlConnected && (
             <div className="text-gray-500 text-xs text-center mt-0.5">Waiting…</div>
           )}
         </div>
@@ -90,7 +108,13 @@ export default function Scoreboard({ dimmed }) {
         className="flex justify-start pl-5"
         style={{ filter: 'drop-shadow(0 2px 6px rgba(255,128,0,0.4))' }}
       >
-        <TeamPanel team={orangeTeam} seriesTeam={seriesState.teams[1]} side="right" />
+        <TeamPanel
+          score={view.orangeScore}
+          rlName={view.orangeRlName}
+          configuredName={view.orangeConfiguredName}
+          logoUrl={view.orangeLogoUrl}
+          side="right"
+        />
       </div>
     </div>
   )
