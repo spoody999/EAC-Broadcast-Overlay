@@ -4,29 +4,29 @@ A real-time EAC compatible broadcast overlay for **Rocket League** that connects
 
 ## Features
 
-- **Live scoreboard** ΓÇö team names, logos, scores, and countdown clock with overtime indicator
-- **Per-player boost meters** ΓÇö color-coded by team, with supersonic glow and demolish state
-- **Goal notification** ΓÇö animated banner showing scorer, assist, and goal speed; auto-dismisses after 5 seconds
-- **Series score** ΓÇö BO3 / BO5 / BO7 win pip display, persisted across game restarts
-- **Admin control panel** ΓÇö configure team names, logo URLs, series format, and manually adjust series wins
-- **OBS-ready** ΓÇö transparent 1920├ù1080 canvas loaded directly as an OBS Browser Source
-- **Dev mock** ΓÇö scripted match sequence for developing without a running copy of Rocket League
+- **Live scoreboard** — team names, logos, scores, and countdown clock with overtime indicator
+- **Per-player boost meters** — color-coded by team, with supersonic glow and demolish state
+- **Goal notification** — animated banner showing scorer, assist, and goal speed; auto-dismisses after 5 seconds
+- **Series score** — BO3 / BO5 / BO7 win pip display, persisted across game restarts
+- **Admin control panel** — configure team names, logo URLs, series format, and manually adjust series wins
+- **OBS-ready** — transparent 1920×1080 canvas loaded directly as an OBS Browser Source
+- **Dev mock** — scripted match sequence for developing without a running copy of Rocket League
 
 ## Architecture
 
 ```
 Rocket League (port 49123)
-        Γöé  tcp://127.0.0.1:49123  (newline-delimited JSON)
-        Γû╝
+        │  tcp://127.0.0.1:49123  (newline-delimited JSON)
+        ▼
   Node.js Relay Server (port 3001)
-  Γö£ΓöÇΓöÇ Fans out all RL events to browser clients
-  Γö£ΓöÇΓöÇ REST API for series state management
-  ΓööΓöÇΓöÇ Persists series config to series.json
-        Γöé  ws://127.0.0.1:3001/ws
-        Γû╝
+  ├── Fans out all RL events to browser clients
+  ├── REST API for series state management
+  └── Persists series config to series.json
+        │  ws://127.0.0.1:3001/ws
+        ▼
   React App (Vite, port 5173)
-  Γö£ΓöÇΓöÇ /overlay  ΓåÆ  OBS Browser Source
-  ΓööΓöÇΓöÇ /admin    ΓåÆ  Director control panel
+  ├── /overlay  →  OBS Browser Source
+  └── /admin    →  Director control panel
 ```
 
 The relay server pattern is necessary because the RL Stats API accepts only one TCP connection at a time. The relay fans that single connection out to as many browser windows as needed.
@@ -87,21 +87,21 @@ Navigate to [http://localhost:5173/admin](http://localhost:5173/admin) in your b
 4. Enable **"Shutdown source when not visible"** to save resources when off-stream
 5. Check **"Refresh browser when scene becomes active"**
 
-The overlay background is fully transparent ΓÇö position it as the top layer in your scene.
+The overlay background is fully transparent — position it as the top layer in your scene.
 
 ## Development Without Rocket League
 
 Run the mock broadcast script in a separate terminal to simulate a full match:
 
 ```bash
-# Terminal 1 ΓÇö relay server + client
+# Terminal 1 — relay server + client
 npm run dev
 
-# Terminal 2 ΓÇö mock RL Stats API
+# Terminal 2 — mock RL Stats API
 node server/mock.js
 ```
 
-The mock simulates a full match lifecycle: MatchCreated ΓåÆ countdown ΓåÆ two goals (one with an assist) ΓåÆ overtime ΓåÆ final goal ΓåÆ MatchEnded ΓåÆ PodiumStart. Boost values animate so you can verify the boost meters live.
+The mock simulates a full match lifecycle: MatchCreated → countdown → two goals (one with an assist) → overtime → final goal → MatchEnded → PodiumStart. Boost values animate so you can verify the boost meters live.
 
 ## Production Build
 
@@ -116,33 +116,33 @@ For a production deployment, serve the `client/dist/` folder with any static fil
 
 ```
 EAC-Broadcast-Overlay/
-Γö£ΓöÇΓöÇ package.json              # npm workspaces root + concurrently dev script
-Γö£ΓöÇΓöÇ server/
-Γöé   Γö£ΓöÇΓöÇ package.json
-Γöé   Γö£ΓöÇΓöÇ index.js              # Express + WebSocket relay server + REST API
-Γöé   Γö£ΓöÇΓöÇ rlClient.js           # TCP client ΓåÆ RL Stats API (auto-reconnect, newline-delimited JSON)
-Γöé   Γö£ΓöÇΓöÇ seriesStore.js        # JSON-backed series state
-Γöé   ΓööΓöÇΓöÇ mock.js               # Dev mock ΓÇö scripted match sequence
-ΓööΓöÇΓöÇ client/
-    Γö£ΓöÇΓöÇ package.json
-    Γö£ΓöÇΓöÇ vite.config.js
-    Γö£ΓöÇΓöÇ tailwind.config.js
-    ΓööΓöÇΓöÇ src/
-        Γö£ΓöÇΓöÇ App.jsx
-        Γö£ΓöÇΓöÇ main.jsx
-        Γö£ΓöÇΓöÇ index.css
-        Γö£ΓöÇΓöÇ routes/
-        Γöé   Γö£ΓöÇΓöÇ Overlay.jsx   # OBS Browser Source view (1920├ù1080, transparent)
-        Γöé   ΓööΓöÇΓöÇ Admin.jsx     # Director control panel
-        Γö£ΓöÇΓöÇ components/
-        Γöé   Γö£ΓöÇΓöÇ Scoreboard.jsx
-        Γöé   Γö£ΓöÇΓöÇ BoostMeters.jsx
-        Γöé   Γö£ΓöÇΓöÇ GoalNotification.jsx
-        Γöé   ΓööΓöÇΓöÇ SeriesScore.jsx
-        Γö£ΓöÇΓöÇ store/
-        Γöé   ΓööΓöÇΓöÇ useGameStore.js   # Zustand state
-        ΓööΓöÇΓöÇ hooks/
-            ΓööΓöÇΓöÇ useStatsSocket.js # WebSocket ΓåÆ store dispatcher
+├── package.json              # npm workspaces root + concurrently dev script
+├── server/
+│   ├── package.json
+│   ├── index.js              # Express + WebSocket relay server + REST API
+│   ├── rlClient.js           # TCP client → RL Stats API (auto-reconnect, newline-delimited JSON)
+│   ├── seriesStore.js        # JSON-backed series state
+│   └── mock.js               # Dev mock — scripted match sequence
+└── client/
+    ├── package.json
+    ├── vite.config.js
+    ├── tailwind.config.js
+    └── src/
+        ├── App.jsx
+        ├── main.jsx
+        ├── index.css
+        ├── routes/
+        │   ├── Overlay.jsx   # OBS Browser Source view (1920×1080, transparent)
+        │   └── Admin.jsx     # Director control panel
+        ├── components/
+        │   ├── Scoreboard.jsx
+        │   ├── BoostMeters.jsx
+        │   ├── GoalNotification.jsx
+        │   └── SeriesScore.jsx
+        ├── store/
+        │   └── useGameStore.js   # Zustand state
+        └── hooks/
+            └── useStatsSocket.js # WebSocket → store dispatcher
 ```
 
 ## API Reference
@@ -151,12 +151,12 @@ The relay server exposes a small REST API for series management:
 
 | Method | Path | Body | Description |
 |--------|------|------|-------------|
-| `GET` | `/api/health` | ΓÇö | Returns `{ ok: true, rlConnected: bool }` |
-| `GET` | `/api/series` | ΓÇö | Returns current series state |
+| `GET` | `/api/health` | — | Returns `{ ok: true, rlConnected: bool }` |
+| `GET` | `/api/series` | — | Returns current series state |
 | `POST` | `/api/series` | `{ teams: [{name, logoUrl}], format }` | Update team config and series format |
 | `POST` | `/api/series/increment` | `{ teamNum: 0\|1 }` | Increment a team's series win count |
 | `POST` | `/api/series/wins` | `{ teamNum: 0\|1, wins: number }` | Set a team's series wins directly |
-| `POST` | `/api/series/reset` | ΓÇö | Reset series wins to 0 for both teams |
+| `POST` | `/api/series/reset` | — | Reset series wins to 0 for both teams |
 
 ## WebSocket Events
 
