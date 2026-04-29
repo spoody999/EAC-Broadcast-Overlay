@@ -5,6 +5,7 @@ A real-time EAC compatible broadcast overlay for **Rocket League** that connects
 ## Setup Video
 
 [![Setup Tutorial](https://img.youtube.com/vi/EYZmHizL5yE/maxresdefault.jpg)](https://youtu.be/EYZmHizL5yE)
+[Setup Video](https://youtu.be/EYZmHizL5yE)
 
 ## Features
 
