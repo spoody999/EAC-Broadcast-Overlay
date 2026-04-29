@@ -6,6 +6,7 @@ A real-time EAC compatible broadcast overlay for **Rocket League** that connects
 
 [![Setup Tutorial](https://img.youtube.com/vi/EYZmHizL5yE/maxresdefault.jpg)](https://youtu.be/EYZmHizL5yE)
 [Setup Video](https://youtu.be/EYZmHizL5yE)
+### DOES NOT INCLUDE GIT INSTALL, IF YOU GET AN ERROR RELATED TO GIT, SEARCH "How to install Git"
 
 ## Features
 
@@ -40,6 +41,7 @@ The relay server pattern is necessary because the RL Stats API accepts only one 
 
 - [Node.js](https://nodejs.org/) v20 or later
 - npm v10 or later (included with Node.js)
+- [Git](https://git-scm.com/install/)
 - Rocket League installed via Steam or the Epic Games Launcher
 
 ## Setup
