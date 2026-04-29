@@ -2,6 +2,10 @@
 
 A real-time EAC compatible broadcast overlay for **Rocket League** that connects to Epic Games' new Stats API (introduced alongside the Easy Anti-Cheat update in April 2026). Built as a drop-in replacement for the BakkesMod/SOS plugin workflow used by esports broadcasters and independent streamers.
 
+## Setup Video
+
+[![Setup Tutorial](https://img.youtube.com/vi/EYZmHizL5yE/maxresdefault.jpg)](https://youtu.be/EYZmHizL5yE)
+
 ## Features
 
 - **Live scoreboard** — team names, logos, scores, and countdown clock with overtime indicator
