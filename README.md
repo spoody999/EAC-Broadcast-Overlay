@@ -58,7 +58,7 @@ PacketSendRate=20
 ### 2. Install dependencies
 
 ```bash
-git clone https://github.com/ryansiegristpa/EAC-Broadcast-Overlay.git
+git clone https://github.com/spoody999/EAC-Broadcast-Overlay.git
 cd EAC-Broadcast-Overlay
 npm install
 ```
